@@ -1,0 +1,64 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+void generate_sequence(int sequence[4]) {
+    srand(time(0));
+    for (int i = 0; i < 4; ++i) {
+        sequence[i] = rand() % 5 + 1;
+    }
+}
+
+void compare_sequences(int secret[4], int guess[4], int* correct_position, int* correct_value) {
+    int used_secret[4] = {0}, used_guess[4] = {0};
+    *correct_position = 0;
+    *correct_value = 0;
+
+    for (int i = 0; i < 4; ++i) {
+        if (secret[i] == guess[i]) {
+            (*correct_position)++;
+            used_secret[i] = 1;
+            used_guess[i] = 1;
+        }
+    }
+
+    for (int i = 0; i < 4; ++i) {
+        if (!used_guess[i]) {
+            for (int j = 0; j < 4; ++j) {
+                if (!used_secret[j] && guess[i] == secret[j]) {
+                    (*correct_value)++;
+                    used_secret[j] = 1;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    int secret[4], guess[4], correct_position, correct_value, attempts = 0;
+    
+    generate_sequence(secret);
+
+    printf("Witamy w grze Mastermind!\n");
+    printf("Spróbuj odgadnąć sekwencję 4 liczb (od 1 do 5).\n");
+
+    while (1) {
+        attempts++;
+        printf("Próba %d. Wprowadź 4 liczby: ", attempts);
+        for (int i = 0; i < 4; ++i) {
+            scanf("%d", &guess[i]);
+        }
+
+        compare_sequences(secret, guess, &correct_position, &correct_value);
+        printf("Liczby na właściwych pozycjach: %d\n", correct_position);
+        printf("Liczby na niewłaściwych pozycjach: %d\n", correct_value);
+
+        if (correct_position == 4) {
+            printf("Gratulacje! Odgadłeś sekwencję w %d próbach.\n", attempts);
+            break;
+        }
+    }
+
+    return 0;
+}
