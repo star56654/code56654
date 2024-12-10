@@ -1,41 +1,39 @@
-#include <iostream>
+#!/bin/bash
 
-using namespace std;
+secret=$((RANDOM % 5 + 1))$((RANDOM % 5 + 1))$((RANDOM % 5 + 1))$((RANDOM % 5 + 1))
+echo "Zgadnij tajna sekwencje 4 cyfr od 1 do 5!"
+echo "Sekwencja to: $secret"  # Pokazuje zagadniona sekwencje
 
-class Data {
-    int dzien, miesiac, rok;
-public:
-    int set(int d, int m, int r);
-    int getDzien() { return dzien; }
-    int getMiesiac() { return miesiac; }
-    int getRok() { return rok; }
-};
+while true; do
+    read -p "Twoja odpowiedz: " guess
+    if [[ ! $guess =~ ^[1-5]{4}$ ]]; then
+        echo "Nieprawidlowy format. Wprowadz 4 cyfry od 1 do 5."
+        continue
+    fi
 
-int Data::set(int d, int m, int r) {
-    if (d < 1 || d > 31) return 1;
-    if (m < 1 || m > 12) return 2;
-    if (r < 1970) return 3;
-    dzien = d;
-    miesiac = m;
-    rok = r;
-    return 0;
-}
+    if [[ $guess == $secret ]]; then
+        echo "Brawo! Zgadles: $secret"
+        break
+    fi
 
-int main() {
-    Data data;
-    int result = data.set(12, 11, 2024);
+    correct_positions=0
+    correct_numbers=0
+    secret_copy=$secret
 
-    if (result == 0) {
-        cout << "Data: " << data.getDzien() << "-" << data.getMiesiac() << "-" << data.getRok() << endl;
-    }
-    else {
-        cout << "Błąd: ";
-        switch (result) {
-        case 1: cout << "Nieprawidłowy dzień." << endl; break;
-        case 2: cout << "Nieprawidłowy miesiąc." << endl; break;
-        case 3: cout << "Nieprawidłowy rok." << endl; break;
-        }
-    }
+    for i in {0..3}; do
+        if [[ ${guess:$i:1} == ${secret:$i:1} ]]; then
+            ((correct_positions++))
+            secret_copy=${secret_copy/${guess:$i:1}/}  # Usuwa dopasowana liczbe
+        fi
+    done
 
-    return 0;
-}
+    for i in {0..3}; do
+        digit=${guess:$i:1}
+        if [[ $secret_copy == *$digit* && ${guess:$i:1} != ${secret:$i:1} ]]; then
+            ((correct_numbers++))
+            secret_copy=${secret_copy/$digit/}  # Usuwa liczbe z kopi
+        fi
+    done
+
+    echo "Na wlasciwych pozycjach: $correct_positions, poprawne liczby w zlych miejscach: $correct_numbers"
+done
