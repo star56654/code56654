@@ -1,39 +1,49 @@
 #!/bin/bash
 
-secret=$((RANDOM % 5 + 1))$((RANDOM % 5 + 1))$((RANDOM % 5 + 1))$((RANDOM % 5 + 1))
-echo "Zgadnij tajna sekwencje 4 cyfr od 1 do 5!"
-echo "Sekwencja to: $secret"  # Pokazuje zagadniona sekwencje
+maze=(
+  "0000000"
+  "0100110"
+  "0111100"
+  "0010000"
+  "0000000"
+)
 
-while true; do
-    read -p "Twoja odpowiedz: " guess
-    if [[ ! $guess =~ ^[1-5]{4}$ ]]; then
-        echo "Nieprawidlowy format. Wprowadz 4 cyfry od 1 do 5."
-        continue
+find_exit() {
+  rows=${#maze[@]}
+  cols=${#maze[0]}
+  start_row=$((rows / 2))
+  start_col=$((cols / 2))
+  queue=("$start_row:$start_col")
+  visited=()
+  directions=(-1:0 1:0 0:-1 0:1)
+
+  while [[ ${#queue[@]} -gt 0 ]]; do
+    current=${queue[0]}
+    queue=("${queue[@]:1}")
+    IFS=":" read -r x y <<< "$current"
+
+    if [[ $x -eq 0 || $x -eq $((rows - 1)) || $y -eq 0 || $y -eq $((cols - 1)) ]]; then
+      echo "Выход найден: $x $y"
+      return
     fi
 
-    if [[ $guess == $secret ]]; then
-        echo "Brawo! Zgadles: $secret"
-        break
-    fi
+    visited+=("$x:$y")
 
-    correct_positions=0
-    correct_numbers=0
-    secret_copy=$secret
+    for d in "${directions[@]}"; do
+      IFS=":" read -r dx dy <<< "$d"
+      nx=$((x + dx))
+      ny=$((y + dy))
 
-    for i in {0..3}; do
-        if [[ ${guess:$i:1} == ${secret:$i:1} ]]; then
-            ((correct_positions++))
-            secret_copy=${secret_copy/${guess:$i:1}/}  # Usuwa dopasowana liczbe
+      if [[ $nx -ge 0 && $nx -lt $rows && $ny -ge 0 && $ny -lt $cols && ${maze[nx]:ny:1} -eq 1 ]]; then
+        neighbor="$nx:$ny"
+        if [[ ! " ${visited[*]} " =~ " $neighbor " ]]; then
+          queue+=("$neighbor")
         fi
+      fi
     done
+  done
 
-    for i in {0..3}; do
-        digit=${guess:$i:1}
-        if [[ $secret_copy == *$digit* && ${guess:$i:1} != ${secret:$i:1} ]]; then
-            ((correct_numbers++))
-            secret_copy=${secret_copy/$digit/}  # Usuwa liczbe z kopi
-        fi
-    done
+  echo "Выхода нет :("
+}
 
-    echo "Na wlasciwych pozycjach: $correct_positions, poprawne liczby w zlych miejscach: $correct_numbers"
-done
+find_exit
