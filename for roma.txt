@@ -1,6 +1,6 @@
 #!/bin/bash
 
-maze=(
+labirynt=(
   "0000000"
   "0100110"
   "0111100"
@@ -8,42 +8,56 @@ maze=(
   "0000000"
 )
 
-find_exit() {
-  rows=${#maze[@]}
-  cols=${#maze[0]}
-  start_row=$((rows / 2))
-  start_col=$((cols / 2))
-  queue=("$start_row:$start_col")
-  visited=()
-  directions=(-1:0 1:0 0:-1 0:1)
+znajdz_wyjscie() {
+  wiersze=${#labirynt[@]}
+  kolumny=${#labirynt[0]}
+  start_wiersz=$((wiersze / 2))
+  start_kolumna=$((kolumny / 2))
+  kolejka=("$start_wiersz:$start_kolumna")
+  odwiedzone=()
+  kierunki=(-1:0 1:0 0:-1 0:1)
 
-  while [[ ${#queue[@]} -gt 0 ]]; do
-    current=${queue[0]}
-    queue=("${queue[@]:1}")
-    IFS=":" read -r x y <<< "$current"
+  while [[ ${#kolejka[@]} -gt 0 ]]; do
+    aktualny=${kolejka[0]}
+    kolejka=("${kolejka[@]:1}")
+    IFS=":" read -r x y <<< "$aktualny"
 
-    if [[ $x -eq 0 || $x -eq $((rows - 1)) || $y -eq 0 || $y -eq $((cols - 1)) ]]; then
-      echo "Выход найден: $x $y"
+    if [[ $x -eq 0 || $x -eq $((wiersze - 1)) || $y -eq 0 || $y -eq $((kolumny - 1)) ]]; then
+      labirynt[$x]=$(echo "${labirynt[$x]}" | sed "s/./X/$y")
+      for odw in "${odwiedzone[@]}"; do
+        IFS=":" read -r px py <<< "$odw"
+        labirynt[$px]=$(echo "${labirynt[$px]}" | sed "s/./X/$py")
+      done
+      echo "Wyjście znalezione: $x $y"
+      wypisz_labirynt
       return
     fi
 
-    visited+=("$x:$y")
+    odwiedzone+=("$x:$y")
 
-    for d in "${directions[@]}"; do
-      IFS=":" read -r dx dy <<< "$d"
+    for k in "${kierunki[@]}"; do
+      IFS=":" read -r dx dy <<< "$k"
       nx=$((x + dx))
       ny=$((y + dy))
 
-      if [[ $nx -ge 0 && $nx -lt $rows && $ny -ge 0 && $ny -lt $cols && ${maze[nx]:ny:1} -eq 1 ]]; then
-        neighbor="$nx:$ny"
-        if [[ ! " ${visited[*]} " =~ " $neighbor " ]]; then
-          queue+=("$neighbor")
+      if [[ $nx -ge 0 && $nx -lt $wiersze && $ny -ge 0 && $ny -lt $kolumny && ${labirynt[nx]:ny:1} -eq 1 ]]; then
+        sasiad="$nx:$ny"
+        if [[ ! " ${odwiedzone[*]} " =~ " $sasiad " ]]; then
+          kolejka+=("$sasiad")
+          labirynt[$nx]=$(echo "${labirynt[$nx]}" | sed "s/./X/$ny")
         fi
       fi
     done
   done
 
-  echo "Выхода нет :("
+  echo "Nie znaleziono wyjścia :("
 }
 
-find_exit
+wypisz_labirynt() {
+  echo "Labirynt po znalezieniu drogi:"
+  for linia in "${labirynt[@]}"; do
+    echo "$linia"
+  done
+}
+
+znajdz_wyjscie
